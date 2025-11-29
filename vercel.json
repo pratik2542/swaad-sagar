@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server.js"
+    }
+  ],
+  "env": {
+    "MONGO_URI": "@mongo_uri",
+    "JWT_SECRET": "@jwt_secret",
+    "GEMINI_API_KEY": "@gemini_api_key",
+    "EMAIL_USER": "@email_user",
+    "EMAIL_PASS": "@email_pass",
+    "FRONTEND_URL": "@frontend_url"
+  }
+}
