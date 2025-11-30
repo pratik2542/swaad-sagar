@@ -29,12 +29,19 @@ app.get('/', (req, res) => res.json({ ok: true, message: 'Swaad Sagar API' }));
 
 const PORT = process.env.PORT || 4000;
 
+// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
-    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
   })
   .catch(err => {
     console.error('MongoDB connection error', err);
-    process.exit(1);
   });
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+}
+
+// Export for Vercel
+module.exports = app;
