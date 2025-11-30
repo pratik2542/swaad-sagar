@@ -43,7 +43,7 @@ export default function AdminAnalytics() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <MetricCard
                 title="Total Revenue"
-                value={`$₹{analytics.totalRevenue?.toFixed(2) || '0.00'}`}
+                value={`₹${analytics.totalRevenue?.toFixed(2) || '0.00'}`}
                 icon="💰"
                 color="green"
               />
@@ -59,7 +59,7 @@ export default function AdminAnalytics() {
                 icon="👥"
                 color="purple"
               />
-              <StatCard
+              <MetricCard
                 title="Average Order Value"
                 value={`₹${analytics.averageOrderValue?.toFixed(2) || '0.00'}`}
                 icon="📊"
