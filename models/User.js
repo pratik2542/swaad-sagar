@@ -11,6 +11,13 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, default: '' },
   contact: { type: String, default: '' },
   isAdmin: { type: Boolean, default: false },
+  defaultAddress: {
+    house: String,
+    landmark: String,
+    address: String,
+    city: String,
+    postalCode: String
+  },
   cart: { type: [CartItemSchema], default: [] },
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },

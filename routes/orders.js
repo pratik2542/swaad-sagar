@@ -82,7 +82,11 @@ router.get('/', auth, async (req, res) => {
     try { userObjectId = mongoose.Types.ObjectId(userId); } catch (e) { userObjectId = null; }
     // build query to match ObjectId when possible, otherwise fall back to raw id
     const query = userObjectId ? { $or: [{ userId: userObjectId }, { userId: userId }] } : { userId: userId };
-    const orders = await Order.find(query).sort({ createdAt: -1 }).populate('statusHistory.updatedBy', 'name email').lean();
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .populate('items.productId', 'imageUrl')
+      .populate('statusHistory.updatedBy', 'name email')
+      .lean();
     console.debug('GET /orders: found', orders.length, 'orders for userId', userId, 'objectIdPresent=', !!userObjectId);
     return res.json(orders);
   } catch (err) {

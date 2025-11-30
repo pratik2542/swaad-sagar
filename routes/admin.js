@@ -48,7 +48,12 @@ router.get('/orders', auth, admin, async (req, res) => {
     }
     // debug: print query so admins can see how search was interpreted
     console.debug('Admin orders query:', JSON.stringify(query));
-    let orders = await Order.find(query).sort({ createdAt: -1 }).populate('userId', 'name email contact').populate('statusHistory.updatedBy', 'name email').lean();
+    let orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .populate('userId', 'name email contact')
+      .populate('items.productId', 'imageUrl')
+      .populate('statusHistory.updatedBy', 'name email')
+      .lean();
 
     // Apply additional filtering if q is provided and not already handled
     if (q) {
@@ -139,7 +144,7 @@ router.put('/orders/:id', auth, admin, async (req, res) => {
 router.get('/analytics', auth, admin, async (req, res) => {
   try {
     // Get all orders with populated data
-    const orders = await Order.find().populate('userId', 'name email').populate('items.productId', 'name category').lean();
+    const orders = await Order.find().populate('userId', 'name email').populate('items.productId', 'name category imageUrl').lean();
 
     // Calculate basic metrics
     const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
@@ -218,6 +223,7 @@ router.get('/analytics', auth, admin, async (req, res) => {
               id: productId,
               name: item.productId?.name || 'Unknown Product',
               category: item.productId?.category || 'Uncategorized',
+              imageUrl: item.productId?.imageUrl,
               unitsSold: 0,
               revenue: 0
             };

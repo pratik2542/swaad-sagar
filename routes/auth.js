@@ -48,11 +48,14 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 // Update user profile
 router.put('/me', authMiddleware, async (req, res) => {
-  const { name, contact } = req.body;
+  const { name, contact, defaultAddress } = req.body;
   try {
+    const updateData = { name, contact };
+    if (defaultAddress) updateData.defaultAddress = defaultAddress;
+    
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name, contact },
+      updateData,
       { new: true }
     ).select('-passwordHash');
     res.json({ user });

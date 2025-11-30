@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
+import Link from 'next/link'
 
 export default function Orders(){
   const [orders, setOrders] = useState(null)
@@ -53,119 +54,212 @@ export default function Orders(){
     }
   }
 
-  if (!orders) return <div className="p-8">Loading...</div>
-  if (orders.length === 0) return <div className="p-8">No orders yet.</div>
+  if (!orders) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
+    </div>
+  )
 
-  if (!orders) return <div className="p-8">Loading...</div>
-  if (orders.length === 0) return <div className="p-8">No orders yet.</div>
+  if (orders.length === 0) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full">
+        <div className="text-6xl mb-4">📦</div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">No orders yet</h2>
+        <p className="text-gray-500 mb-6">Looks like you haven't placed any orders yet.</p>
+        <Link href="/" className="block w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition-colors">
+          Start Shopping
+        </Link>
+      </div>
+    </div>
+  )
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Delivered': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Shipped': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Processing': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">My Orders</h1>
-      <div className="space-y-4">
-        {orders.map(o => (
-          <div key={o._id} className="bg-white p-4 rounded shadow">
-            <div className="flex justify-between">
-              <div>
-                <div className="font-semibold">Order {String(o._id).slice(0,8)}</div>
-                <div className="text-sm text-gray-600">Placed: {new Date(o.createdAt).toLocaleString()}</div>
-                <div className="text-sm mt-2">{(o.items||[]).map(i=>`${i.name} x${i.quantity}`).join(', ')}</div>
-                {o.userReason && <div className="text-sm text-blue-600 mt-2"><strong>Your reason:</strong> {o.userReason}</div>}
-                {o.adminReason && <div className="text-sm text-purple-600 mt-2"><strong>Admin note:</strong> {o.adminReason}</div>}
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
+        
+        <div className="space-y-6">
+          {orders.map(o => (
+            <div key={o._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+              {/* Order Header */}
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex gap-6 text-sm">
+                  <div>
+                    <p className="text-gray-500 mb-1">Order Placed</p>
+                    <p className="font-medium text-gray-900">{new Date(o.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">Total Amount</p>
+                    <p className="font-medium text-gray-900">₹{(o.totalAmount||0).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500 mb-1">Order ID</p>
+                    <p className="font-medium text-gray-900">#{String(o._id).slice(-8).toUpperCase()}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(o.status)}`}>
+                    {o.status}
+                  </span>
+                  {['Placed','Processing'].includes(o.status) && (
+                    <button 
+                      onClick={() => openCancelModal(o._id)}
+                      className="text-sm text-red-600 hover:text-red-800 font-medium hover:underline"
+                    >
+                      Cancel Order
+                    </button>
+                  )}
+                </div>
+              </div>
 
-                {/* Status History */}
-                {o.statusHistory && o.statusHistory.length > 0 && (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="text-sm font-medium text-gray-800 mb-2">Order Updates:</div>
-                    <div className="space-y-2">
-                      {o.statusHistory.map((history, index) => (
-                        <div key={index} className="text-sm bg-white p-2 rounded border-l-4 border-purple-400">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="font-medium text-purple-700">Status: {history.status}</span>
-                              {history.reason && (
-                                <div className="text-purple-600 mt-1">
-                                  <strong>Note:</strong> {history.reason}
-                                </div>
-                              )}
-                              <div className="text-gray-500 text-xs mt-1">
-                                Updated by: {history.updatedBy ? history.updatedBy.name || history.updatedBy.email : 'System'}
-                              </div>
-                            </div>
-                            <div className="text-gray-500 text-xs text-right">
-                              {new Date(history.updatedAt).toLocaleString()}
-                            </div>
+              {/* Order Content */}
+              <div className="p-6">
+                <div className="space-y-6">
+                  {(o.items||[]).map((item, idx) => (
+                    <div key={idx} className="flex gap-4 items-center">
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative">
+                        {item.productId && item.productId.imageUrl ? (
+                          <img 
+                            src={item.productId.imageUrl} 
+                            alt={item.name} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                           </div>
-                        </div>
-                      ))}
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-900">{item.name}</h4>
+                        <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                      </div>
+                      <div className="font-medium text-gray-900">
+                        ₹{((item.price || 0) * item.quantity).toFixed(2)}
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Status History & Notes */}
+                {(o.userReason || o.adminReason || (o.statusHistory && o.statusHistory.length > 0)) && (
+                  <div className="mt-6 pt-6 border-t border-gray-100">
+                    {o.userReason && (
+                      <div className="mb-3 text-sm bg-blue-50 text-blue-800 p-3 rounded-lg border border-blue-100">
+                        <strong>Your Note:</strong> {o.userReason}
+                      </div>
+                    )}
+                    {o.adminReason && (
+                      <div className="mb-3 text-sm bg-purple-50 text-purple-800 p-3 rounded-lg border border-purple-100">
+                        <strong>Admin Note:</strong> {o.adminReason}
+                      </div>
+                    )}
+                    
+                    {o.statusHistory && o.statusHistory.length > 0 && (
+                      <div className="mt-4">
+                        <h5 className="text-sm font-bold text-gray-900 mb-3">Order Updates</h5>
+                        <div className="space-y-3 pl-4 border-l-2 border-gray-200">
+                          {o.statusHistory.map((history, index) => (
+                            <div key={index} className="relative">
+                              <div className="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-purple-500 border-2 border-white ring-1 ring-gray-200"></div>
+                              <div className="text-sm">
+                                <span className="font-medium text-gray-900">{history.status}</span>
+                                <span className="text-gray-500 mx-2">•</span>
+                                <span className="text-gray-500">{new Date(history.updatedAt).toLocaleString()}</span>
+                              </div>
+                              {history.reason && (
+                                <p className="text-sm text-gray-600 mt-0.5">{history.reason}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-              <div className="text-right">
-                <div className="font-semibold">₹{(o.totalAmount||0).toFixed(2)}</div>
-                <div className="text-sm">Status: {o.status}</div>
-                {/* Cancel button allowed when not shipped/delivered/cancelled */}
-                {['Placed','Processing'].includes(o.status) && <button onClick={() => openCancelModal(o._id)} className="mt-2 bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded transition-colors">Cancel</button>}
-              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Cancel Order Modal */}
       {cancelModal.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Cancel Order</h3>
-            <p className="text-gray-600 mb-4">Please select a reason for cancellation:</p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Reason</label>
-                <select
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  <option value="">Select a reason...</option>
-                  <option value="Changed my mind">Changed my mind</option>
-                  <option value="Found better price elsewhere">Found better price elsewhere</option>
-                  <option value="Delivery delay">Delivery delay</option>
-                  <option value="Wrong items ordered">Wrong items ordered</option>
-                  <option value="Payment issues">Payment issues</option>
-                  <option value="Other">Other</option>
-                </select>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Cancel Order</h3>
+                <button onClick={closeCancelModal} className="text-gray-400 hover:text-gray-500">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
+              
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to cancel this order? This action cannot be undone.
+              </p>
 
-              {cancelReason === 'Other' && (
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Custom Reason</label>
-                  <textarea
-                    value={customReason}
-                    onChange={(e) => setCustomReason(e.target.value)}
-                    placeholder="Please provide your reason for cancellation..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                    rows="3"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Reason for Cancellation</label>
+                  <select
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
+                  >
+                    <option value="">Select a reason...</option>
+                    <option value="Changed my mind">Changed my mind</option>
+                    <option value="Found better price elsewhere">Found better price elsewhere</option>
+                    <option value="Delivery delay">Delivery delay</option>
+                    <option value="Wrong items ordered">Wrong items ordered</option>
+                    <option value="Payment issues">Payment issues</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
-              )}
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={handleCancelOrder}
-                  disabled={loading || !cancelReason}
-                  className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                >
-                  {loading ? 'Cancelling...' : 'Cancel Order'}
-                </button>
-                <button
-                  onClick={closeCancelModal}
-                  disabled={loading}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors"
-                >
-                  Keep Order
-                </button>
+                {cancelReason === 'Other' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Custom Reason</label>
+                    <textarea
+                      value={customReason}
+                      onChange={(e) => setCustomReason(e.target.value)}
+                      placeholder="Please tell us why..."
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 resize-none transition-all"
+                      rows="3"
+                    />
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={closeCancelModal}
+                    disabled={loading}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition-colors"
+                  >
+                    Keep Order
+                  </button>
+                  <button
+                    onClick={handleCancelOrder}
+                    disabled={loading || !cancelReason}
+                    className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg hover:shadow-red-500/30"
+                  >
+                    {loading ? 'Cancelling...' : 'Confirm Cancel'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

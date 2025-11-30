@@ -90,6 +90,7 @@ Keep it concise and appetizing. Use bullet points with • symbol.`;
       keywords: Array.isArray(p.keywords) ? p.keywords.join(', ') : ''
     }); 
     setImagePreview(p.imageUrl || ''); 
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   const del = async (id) => { if(!confirm('Delete?')) return; await apiFetch(`/products/${id}`, { method: 'DELETE' }); load(); }
 
