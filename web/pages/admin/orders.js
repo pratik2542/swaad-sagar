@@ -153,7 +153,7 @@ function OrderRow({ order, onUpdated }){
             </span>
           </div>
           <div className="text-sm text-gray-600 mb-2">Placed: {new Date(order.createdAt).toLocaleString()}</div>
-          <div className="text-sm text-gray-600 mb-3">Total: <span className="font-semibold">${(order.totalAmount||0).toFixed(2)}</span></div>
+          <div className="text-sm text-gray-600 mb-3">Total: <span className="font-semibold">₹{(order.totalAmount||0).toFixed(2)}</span></div>
 
           {/* User Information */}
           {order.userId && (
@@ -190,7 +190,7 @@ function OrderRow({ order, onUpdated }){
                 {order.items.map((item, index) => (
                   <div key={index} className="flex justify-between">
                     <span>{item.name} x{item.quantity}</span>
-                    <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    <span>₹{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>

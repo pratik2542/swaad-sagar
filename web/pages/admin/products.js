@@ -140,7 +140,7 @@ Keep it concise and appetizing. Use bullet points with • symbol.`;
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price ($) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹) *</label>
                   <input 
                     type="number"
                     step="0.01"
@@ -341,7 +341,7 @@ Keep it concise and appetizing. Use bullet points with • symbol.`;
                         </div>
                       )}
                       <div className="flex items-center gap-4 text-sm">
-                        <span className="font-bold text-2xl text-purple-600">${(p.price || 0).toFixed(2)}</span>
+                        <span className="font-bold text-2xl text-purple-600">₹{(p.price || 0).toFixed(2)}</span>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                           p.stock > 10 ? 'bg-green-100 text-green-800' : 
                           p.stock > 0 ? 'bg-yellow-100 text-yellow-800' : 

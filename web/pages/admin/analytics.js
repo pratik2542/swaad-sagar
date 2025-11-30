@@ -43,7 +43,7 @@ export default function AdminAnalytics() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <MetricCard
                 title="Total Revenue"
-                value={`$${analytics.totalRevenue?.toFixed(2) || '0.00'}`}
+                value={`$₹{analytics.totalRevenue?.toFixed(2) || '0.00'}`}
                 icon="💰"
                 color="green"
               />
@@ -59,9 +59,9 @@ export default function AdminAnalytics() {
                 icon="👥"
                 color="purple"
               />
-              <MetricCard
+              <StatCard
                 title="Average Order Value"
-                value={`$${analytics.averageOrderValue?.toFixed(2) || '0.00'}`}
+                value={`₹${analytics.averageOrderValue?.toFixed(2) || '0.00'}`}
                 icon="📊"
                 color="orange"
               />
@@ -101,7 +101,7 @@ export default function AdminAnalytics() {
                           {customer.orderCount}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${customer.totalSpent?.toFixed(2)}
+                          ₹{customer.totalSpent?.toFixed(2)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(customer.lastOrder).toLocaleDateString()}
@@ -123,7 +123,7 @@ export default function AdminAnalytics() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Revenue:</span>
-                        <span className="font-medium">${category.revenue?.toFixed(2)}</span>
+                        <span className="font-medium">₹{category.revenue?.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Orders:</span>
@@ -173,7 +173,7 @@ export default function AdminAnalytics() {
                           {product.unitsSold}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ${product.revenue?.toFixed(2)}
+                          ₹{product.revenue?.toFixed(2)}
                         </td>
                       </tr>
                     )) || []}
@@ -213,7 +213,7 @@ export default function AdminAnalytics() {
                     {analytics.monthlyRevenue?.map((month, index) => (
                       <div key={index} className="flex justify-between items-center">
                         <span className="text-gray-600">{month.month}</span>
-                        <span className="font-medium">${month.revenue?.toFixed(2)}</span>
+                        <span className="font-medium">₹{month.revenue?.toFixed(2)}</span>
                       </div>
                     )) || []}
                   </div>

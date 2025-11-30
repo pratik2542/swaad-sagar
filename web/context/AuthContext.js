@@ -29,6 +29,9 @@ export function AuthProvider({ children }){
     if (res && res.token) {
       localStorage.setItem('token', res.token);
       setUser(res.user);
+      
+      // Sync guest cart to server
+      await syncGuestCart();
     }
     return res;
   }
@@ -38,8 +41,34 @@ export function AuthProvider({ children }){
     if (res && res.token) {
       localStorage.setItem('token', res.token);
       setUser(res.user);
+      
+      // Sync guest cart to server
+      await syncGuestCart();
     }
     return res;
+  }
+
+  const syncGuestCart = async () => {
+    try {
+      const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+      if (guestCart.length > 0) {
+        // Add all guest cart items to server cart
+        for (const item of guestCart) {
+          await apiFetch('/cart', { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+              productId: item.productId, 
+              quantity: item.quantity 
+            }) 
+          });
+        }
+        // Clear guest cart
+        localStorage.removeItem('guestCart');
+        window.dispatchEvent(new CustomEvent('cart-change'));
+      }
+    } catch (e) {
+      console.error('Failed to sync guest cart:', e);
+    }
   }
 
   const logout = () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { apiFetch } from '../lib/api'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -36,26 +37,17 @@ export default function ResetPassword() {
     }
 
     try {
-      const response = await fetch('/api/auth/reset-password', {
+      const data = await apiFetch('/auth/reset-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ token, password }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage('Password reset successfully! Redirecting to login...');
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      } else {
-        setError(data.message || 'An error occurred');
-      }
+      setMessage('Password reset successfully! Redirecting to login...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     } catch (err) {
-      setError('Network error. Please try again.');
+      setError(err.message || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }

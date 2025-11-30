@@ -12,8 +12,17 @@ export default function Nav(){
 
   const loadCount = async () => {
     try {
-      const res = await apiFetch('/cart');
-      setCount((res || []).reduce((s,i) => s + (i.quantity||0), 0));
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      if (!token) {
+        // Load guest cart count
+        const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+        setCount(guestCart.reduce((s, i) => s + (i.quantity || 0), 0));
+      } else {
+        // Load server cart count
+        const res = await apiFetch('/cart');
+        setCount((res || []).reduce((s,i) => s + (i.quantity||0), 0));
+      }
     } catch (e) { setCount(0); }
   }
 

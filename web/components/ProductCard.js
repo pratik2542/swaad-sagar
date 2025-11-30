@@ -4,10 +4,35 @@ import { toast } from '../lib/toast'
 export default function ProductCard({ product }) {
   const addToCart = async () => {
     try {
-      await apiFetch('/cart', { method: 'POST', body: JSON.stringify({ productId: product._id || product.id, quantity: 1 }) });
-      window.dispatchEvent(new CustomEvent('cart-change'));
-      toast('Added to cart');
-    } catch (e) { toast('Add failed: ' + (e.message || ''), 'error'); }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      if (!token) {
+        // Guest user - store in localStorage
+        const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+        const existingItem = guestCart.find(item => item.productId === (product._id || product.id));
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          guestCart.push({
+            productId: product._id || product.id,
+            product: product,
+            quantity: 1
+          });
+        }
+        
+        localStorage.setItem('guestCart', JSON.stringify(guestCart));
+        window.dispatchEvent(new CustomEvent('cart-change'));
+        toast('Added to cart');
+      } else {
+        // Logged in user - save to server
+        await apiFetch('/cart', { method: 'POST', body: JSON.stringify({ productId: product._id || product.id, quantity: 1 }) });
+        window.dispatchEvent(new CustomEvent('cart-change'));
+        toast('Added to cart');
+      }
+    } catch (e) { 
+      toast('Add failed: ' + (e.message || ''), 'error'); 
+    }
   }
 
   return (
@@ -25,7 +50,7 @@ export default function ProductCard({ product }) {
         <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">{product.name}</h3>
         <p className="text-gray-600 text-sm mb-4 line-clamp-3">{product.description}</p>
         <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold text-gray-900">${(product.price || 0).toFixed(2)}</span>
+          <span className="text-2xl font-bold text-gray-900">₹{(product.price || 0).toFixed(2)}</span>
           <button
             onClick={addToCart}
             className="btn-primary"

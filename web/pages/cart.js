@@ -1,15 +1,36 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
 import { toast } from '../lib/toast'
+import { useRouter } from 'next/router'
 
 export default function Cart(){
   const [cart, setCart] = useState(null)
+  const [isGuest, setIsGuest] = useState(false)
+  const router = useRouter()
 
   const load = async () => {
     try {
-      const res = await apiFetch('/cart');
-      setCart(res || []);
-    } catch (e) { setCart([]); }
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      
+      if (!token) {
+        // Load guest cart from localStorage
+        const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+        setCart(guestCart.map(item => ({
+          _id: item.productId,
+          productId: item.product,
+          quantity: item.quantity
+        })));
+        setIsGuest(true);
+      } else {
+        // Load cart from server
+        const res = await apiFetch('/cart');
+        setCart(res || []);
+        setIsGuest(false);
+      }
+    } catch (e) { 
+      setCart([]);
+      setIsGuest(false);
+    }
   }
 
   useEffect(() => {
@@ -34,18 +55,47 @@ export default function Cart(){
   const updateQty = async (productId, qty) => {
     try {
       if (qty <= 0) return removeItem(productId);
-      await apiFetch(`/cart/${productId}`, { method: 'PUT', body: JSON.stringify({ quantity: qty }) });
-      toast('Updated cart');
-      window.dispatchEvent(new CustomEvent('cart-change'));
+      
+      if (isGuest) {
+        // Update guest cart
+        const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+        const item = guestCart.find(i => i.productId === productId);
+        if (item) item.quantity = qty;
+        localStorage.setItem('guestCart', JSON.stringify(guestCart));
+        toast('Updated cart');
+        window.dispatchEvent(new CustomEvent('cart-change'));
+      } else {
+        await apiFetch(`/cart/${productId}`, { method: 'PUT', body: JSON.stringify({ quantity: qty }) });
+        toast('Updated cart');
+        window.dispatchEvent(new CustomEvent('cart-change'));
+      }
     } catch (e) { toast('Update failed: ' + e.message, 'error'); }
   }
 
   const removeItem = async (productId) => {
     try {
-      await apiFetch(`/cart/${productId}`, { method: 'DELETE' });
-      toast('Removed item');
-      window.dispatchEvent(new CustomEvent('cart-change'));
+      if (isGuest) {
+        // Remove from guest cart
+        const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
+        const filtered = guestCart.filter(i => i.productId !== productId);
+        localStorage.setItem('guestCart', JSON.stringify(filtered));
+        toast('Removed item');
+        window.dispatchEvent(new CustomEvent('cart-change'));
+      } else {
+        await apiFetch(`/cart/${productId}`, { method: 'DELETE' });
+        toast('Removed item');
+        window.dispatchEvent(new CustomEvent('cart-change'));
+      }
     } catch (e) { toast('Remove failed: ' + e.message, 'error'); }
+  }
+
+  const handleCheckout = () => {
+    if (isGuest) {
+      toast('Please login to continue', 'error');
+      router.push('/login?redirect=checkout');
+    } else {
+      router.push('/checkout');
+    }
   }
 
   return (
@@ -75,7 +125,7 @@ export default function Cart(){
                         {(item.productId && item.productId.name) || 'Unknown Product'}
                       </h3>
                       <p className="text-gray-600 text-sm lg:text-base">
-                        ${(item.productId && item.productId.price || 0).toFixed(2)} each
+                        ₹{(item.productId && item.productId.price || 0).toFixed(2)} each
                       </p>
                     </div>
 
@@ -102,7 +152,7 @@ export default function Cart(){
                       {/* Item Total */}
                       <div className="text-right sm:text-center">
                         <div className="font-semibold text-gray-900 text-sm lg:text-base">
-                          ${(((item.productId && item.productId.price)||0) * (item.quantity||1)).toFixed(2)}
+                          ₹{(((item.productId && item.productId.price)||0) * (item.quantity||1)).toFixed(2)}
                         </div>
                       </div>
 
@@ -128,14 +178,14 @@ export default function Cart(){
                 </div>
                 <div className="text-left sm:text-right">
                   <div className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                    Total: ${total.toFixed(2)}
+                    Total: ₹{total.toFixed(2)}
                   </div>
-                  <a
-                    href="/checkout"
+                  <button
+                    onClick={handleCheckout}
                     className="inline-block w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 lg:px-8 rounded-lg transition-colors text-center"
                   >
-                    Proceed to Checkout
-                  </a>
+                    {isGuest ? 'Login to Checkout' : 'Proceed to Checkout'}
+                  </button>
                 </div>
               </div>
             </div>

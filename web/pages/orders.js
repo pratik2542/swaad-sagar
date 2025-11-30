@@ -103,7 +103,7 @@ export default function Orders(){
                 )}
               </div>
               <div className="text-right">
-                <div className="font-semibold">${(o.totalAmount||0).toFixed(2)}</div>
+                <div className="font-semibold">₹{(o.totalAmount||0).toFixed(2)}</div>
                 <div className="text-sm">Status: {o.status}</div>
                 {/* Cancel button allowed when not shipped/delivered/cancelled */}
                 {['Placed','Processing'].includes(o.status) && <button onClick={() => openCancelModal(o._id)} className="mt-2 bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded transition-colors">Cancel</button>}
