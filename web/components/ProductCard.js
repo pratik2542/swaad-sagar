@@ -46,6 +46,17 @@ export default function ProductCard({ product }) {
   }, [serverCart, isGuest, product])
 
   const updateQuantity = async (newQty) => {
+    // Check stock limit
+    if (newQty > (product.stock || 0)) {
+      const stock = product.stock || 0;
+      if (stock === 0) {
+        toast('Item is out of stock', 'error');
+        return;
+      }
+      toast(`Only ${stock} items available. Quantity adjusted.`, 'error');
+      newQty = stock;
+    }
+
     try {
       if (isGuest) {
         const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]')
@@ -88,6 +99,9 @@ export default function ProductCard({ product }) {
     }
   }
 
+  const isOutOfStock = (product.stock || 0) <= 0;
+  const isLowStock = (product.stock || 0) > 0 && (product.stock || 0) <= 5;
+
   return (
     <div className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 overflow-hidden border border-gray-100">
       {/* Image Container */}
@@ -97,16 +111,32 @@ export default function ProductCard({ product }) {
             <img
               src={product.imageUrl || '/placeholder.png'}
               alt={product.name}
-              className="h-64 w-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+              className={`h-64 w-full object-cover object-center group-hover:scale-110 transition-transform duration-500 ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
               onError={(e) => e.target.src = 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=Snack'}
             />
             {/* Overlay Gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            
+            {/* Stock Badges */}
+            {isOutOfStock && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                <span className="bg-red-600 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg transform -rotate-12">
+                  Out of Stock
+                </span>
+              </div>
+            )}
+            {isLowStock && !isOutOfStock && (
+              <div className="absolute top-2 right-2">
+                <span className="bg-orange-500 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-md animate-pulse">
+                  Only {product.stock} left!
+                </span>
+              </div>
+            )}
           </div>
         </Link>
         
         {/* Quick Add Button (Visible on Hover) */}
-        {qty === 0 && (
+        {qty === 0 && !isOutOfStock && (
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -131,13 +161,18 @@ export default function ProductCard({ product }) {
               {product.category || 'Snack'}
             </p>
             <Link href={`/product/${product._id || product.id}`} className="block">
-              <h3 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-purple-600 transition-colors cursor-pointer">
+              <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-purple-600 transition-colors cursor-pointer">
                 {product.name}
               </h3>
             </Link>
           </div>
           <div className="flex flex-col items-end">
              <span className="text-lg font-bold text-gray-900">₹{(product.price || 0).toFixed(2)}</span>
+             {product.quantityValue && product.unit && (
+               <span className="text-xs text-gray-500 font-medium">
+                 {product.quantityValue} {product.unit}
+               </span>
+             )}
           </div>
         </div>
         
@@ -156,7 +191,12 @@ export default function ProductCard({ product }) {
             <span className="font-bold text-gray-900 text-lg w-8 text-center">{qty}</span>
             <button
               onClick={() => updateQuantity(qty + 1)}
-              className="w-10 h-10 flex items-center justify-center bg-white hover:bg-green-50 text-gray-700 hover:text-green-600 rounded-lg transition-all duration-200 shadow-sm font-bold text-lg"
+              className={`w-10 h-10 flex items-center justify-center bg-white rounded-lg transition-all duration-200 shadow-sm font-bold text-lg ${
+                qty >= (product.stock || 0) 
+                  ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                  : 'hover:bg-green-50 text-gray-700 hover:text-green-600'
+              }`}
+              disabled={qty >= (product.stock || 0)}
             >
               +
             </button>
@@ -164,12 +204,23 @@ export default function ProductCard({ product }) {
         ) : (
           <button
             onClick={() => updateQuantity(1)}
-            className="w-full bg-gray-50 hover:bg-gray-900 text-gray-900 hover:text-white font-semibold py-2.5 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 group-hover:bg-purple-600 group-hover:text-white"
+            disabled={isOutOfStock}
+            className={`w-full font-semibold py-2.5 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 ${
+              isOutOfStock 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-gray-50 hover:bg-gray-900 text-gray-900 hover:text-white group-hover:bg-purple-600 group-hover:text-white'
+            }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            Add to Cart
+            {isOutOfStock ? (
+              'Out of Stock'
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Add to Cart
+              </>
+            )}
           </button>
         )}
       </div>

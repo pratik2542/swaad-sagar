@@ -56,6 +56,25 @@ export default function Cart(){
     try {
       if (qty <= 0) return removeItem(productId);
       
+      // Find product to check stock
+      const cartItem = cart.find(i => (i.productId._id || i.productId) === productId);
+      const product = cartItem ? cartItem.productId : null;
+      
+      if (product && qty > (product.stock || 0)) {
+        const stock = product.stock || 0;
+        if (stock === 0) {
+           toast('Item is out of stock', 'error');
+           // If trying to set a positive quantity when stock is 0, we can't.
+           // But we shouldn't necessarily remove it automatically unless the user explicitly did so?
+           // Actually, if they try to update it, and it's out of stock, we can't fulfill it.
+           // Let's just return for now if stock is 0 to avoid accidental removal, 
+           // unless the user clicked the remove button (which calls removeItem directly).
+           return;
+        }
+        toast(`Only ${stock} items available. Quantity adjusted.`, 'error');
+        qty = stock;
+      }
+
       if (isGuest) {
         // Update guest cart
         const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]');
@@ -163,29 +182,29 @@ export default function Cart(){
                         </div>
 
                         {/* Quantity Controls */}
-                        <div className="flex items-center justify-between gap-4 pt-3 border-t border-gray-100">
-                          <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-1">
+                        <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-2 pt-3 border-t border-gray-100">
+                          <div className="flex items-center gap-2 md:gap-3 bg-gray-50 rounded-xl p-1">
                             <button
                               onClick={() => updateQty(product._id || item.productId, (item.quantity||1) - 1)}
-                              className="w-10 h-10 flex items-center justify-center bg-white hover:bg-gradient-to-r hover:from-orange-500 hover:to-purple-600 hover:text-white text-gray-700 rounded-lg transition-all duration-200 text-xl font-bold shadow-sm"
+                              className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-white hover:bg-gradient-to-r hover:from-orange-500 hover:to-purple-600 hover:text-white text-gray-700 rounded-lg transition-all duration-200 text-lg md:text-xl font-bold shadow-sm"
                             >
                               −
                             </button>
-                            <span className="w-12 text-center font-bold text-gray-900 text-lg">
+                            <span className="w-8 md:w-12 text-center font-bold text-gray-900 text-base md:text-lg">
                               {item.quantity || 1}
                             </span>
                             <button
                               onClick={() => updateQty(product._id || item.productId, (item.quantity||1) + 1)}
-                              className="w-10 h-10 flex items-center justify-center bg-white hover:bg-gradient-to-r hover:from-orange-500 hover:to-purple-600 hover:text-white text-gray-700 rounded-lg transition-all duration-200 text-xl font-bold shadow-sm"
+                              className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-white hover:bg-gradient-to-r hover:from-orange-500 hover:to-purple-600 hover:text-white text-gray-700 rounded-lg transition-all duration-200 text-lg md:text-xl font-bold shadow-sm"
                             >
                               +
                             </button>
                           </div>
 
                           {/* Item Total */}
-                          <div className="text-right">
-                            <p className="text-sm text-gray-500 mb-1">Subtotal</p>
-                            <p className="font-bold text-xl text-gray-900">
+                          <div className="text-right ml-auto">
+                            <p className="text-xs md:text-sm text-gray-500 mb-0.5 md:mb-1">Subtotal</p>
+                            <p className="font-bold text-lg md:text-xl text-gray-900">
                               ₹{itemTotal.toFixed(2)}
                             </p>
                           </div>

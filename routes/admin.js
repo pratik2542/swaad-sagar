@@ -6,6 +6,7 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const sendEmail = require('../utils/email');
 
 router.get('/products', auth, admin, async (req, res) => {
   const products = await Product.find();
@@ -109,7 +110,7 @@ router.put('/orders/:id', auth, admin, async (req, res) => {
     const { id } = req.params;
     const { status, adminReason } = req.body;
     if (!status) return res.status(400).json({ message: 'Status is required' });
-    const order = await Order.findById(id);
+    const order = await Order.findById(id).populate('userId', 'email name');
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     // Prevent updates on cancelled or delivered orders
@@ -118,6 +119,7 @@ router.put('/orders/:id', auth, admin, async (req, res) => {
     }
 
     // Update status and admin reason (admin cannot modify user reason)
+    const oldStatus = order.status;
     order.status = status;
     if (adminReason !== undefined) {
       order.adminReason = adminReason;
@@ -133,6 +135,44 @@ router.put('/orders/:id', auth, admin, async (req, res) => {
     });
 
     await order.save();
+
+    // Debug logging for email
+    console.log('Checking email conditions:', {
+      oldStatus,
+      newStatus: status,
+      hasUserId: !!order.userId,
+      userEmail: order.userId ? order.userId.email : 'N/A'
+    });
+
+    // Send email notification if status changed
+    if (oldStatus !== status && order.userId && order.userId.email) {
+      try {
+        await sendEmail({
+          to: order.userId.email,
+          subject: `Order Status Update - Order #${order._id.toString().slice(-6)}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #7c3aed;">Order Status Update</h2>
+              <p>Hello ${order.userId.name || 'Customer'},</p>
+              <p>Your order <strong>#${order._id.toString().slice(-6)}</strong> has been updated.</p>
+              <div style="background-color: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                <p style="margin: 0; font-size: 14px; color: #6b7280;">New Status:</p>
+                <p style="margin: 4px 0 0 0; font-size: 18px; font-weight: bold; color: #111827;">${status}</p>
+                ${adminReason ? `<p style="margin: 12px 0 0 0; font-size: 14px; color: #6b7280;">Note:</p><p style="margin: 4px 0 0 0; color: #374151;">${adminReason}</p>` : ''}
+              </div>
+              <p>You can view your order details by logging into your account.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="color: #666; font-size: 12px;">Swaad Sagar - Delicious Indian Snacks</p>
+            </div>
+          `
+        });
+        console.log(`Status update email sent to ${order.userId.email}`);
+      } catch (emailErr) {
+        console.error('Failed to send status update email:', emailErr);
+        // Don't fail the request if email fails
+      }
+    }
+
 
     res.json({ success: true, order });
   } catch (err) {

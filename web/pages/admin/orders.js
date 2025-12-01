@@ -28,6 +28,7 @@ export default function AdminOrders() {
   }
 
   const [filters, setFilters] = useState({ status: '', q: '', from: '', to: '' });
+  const [showFilters, setShowFilters] = useState(false);
   const qs = new URLSearchParams();
   if (filters.status) qs.set('status', filters.status);
   if (filters.q) qs.set('q', filters.q);
@@ -52,67 +53,89 @@ export default function AdminOrders() {
 
         {/* Filters Toolbar */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            <div className="md:col-span-3">
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </span>
-                <input 
-                  placeholder="Search ID, email, name..." 
-                  value={filters.q} 
-                  onChange={e => setFilters(f => ({...f, q: e.target.value}))} 
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
-                />
+          <div className="flex items-center justify-between md:hidden mb-2" onClick={() => setShowFilters(!showFilters)}>
+            <h2 className="font-bold text-gray-700 flex items-center gap-2">
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filters
+            </h2>
+            <button className="text-gray-400">
+              <svg className={`w-5 h-5 transform transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className={`${showFilters ? 'block' : 'hidden'} md:block`}>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="md:col-span-3">
+                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Search</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </span>
+                  <input 
+                    placeholder="ID, email, name..." 
+                    value={filters.q} 
+                    onChange={e => setFilters(f => ({...f, q: e.target.value}))} 
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
+                  />
+                </div>
               </div>
-            </div>
-            <div className="md:col-span-2">
-              <select 
-                value={filters.status} 
-                onChange={e => setFilters(f => ({...f, status: e.target.value}))} 
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all appearance-none"
-              >
-                <option value="">All Statuses</option>
-                <option value="Placed">Placed</option>
-                <option value="Processing">Processing</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <input 
-                type="date" 
-                value={filters.from} 
-                onChange={e => setFilters(f => ({...f, from: e.target.value}))} 
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
-              />
-            </div>
-            <div className="md:col-span-2">
-              <input 
-                type="date" 
-                value={filters.to} 
-                onChange={e => setFilters(f => ({...f, to: e.target.value}))} 
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
-              />
-            </div>
-            <div className="md:col-span-3 flex justify-end">
-              <button 
-                onClick={() => { setFilters({ status: '', q: '', from: '', to: '' }); }} 
-                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Clear
-              </button>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">Status</label>
+                <select 
+                  value={filters.status} 
+                  onChange={e => setFilters(f => ({...f, status: e.target.value}))} 
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all appearance-none"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Placed">Placed</option>
+                  <option value="Processing">Processing</option>
+                  <option value="Shipped">Shipped</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4 md:contents">
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">From</label>
+                  <input 
+                    type="date" 
+                    value={filters.from} 
+                    onChange={e => setFilters(f => ({...f, from: e.target.value}))} 
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-gray-500 mb-1 ml-1">To</label>
+                  <input 
+                    type="date" 
+                    value={filters.to} 
+                    onChange={e => setFilters(f => ({...f, to: e.target.value}))} 
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all" 
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-3 flex items-end justify-end">
+                <button 
+                  onClick={() => { setFilters({ status: '', q: '', from: '', to: '' }); }} 
+                  className="w-full md:w-auto px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {!orders && (
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600"></div>
@@ -165,6 +188,16 @@ function OrderRow({ order, onUpdated }){
     }
   }
 
+  const getStatusBorderClass = (s) => {
+    switch(s) {
+      case 'Delivered': return 'border-l-green-500';
+      case 'Cancelled': return 'border-l-red-500';
+      case 'Shipped': return 'border-l-blue-500';
+      case 'Processing': return 'border-l-yellow-500';
+      default: return 'border-l-purple-600';
+    }
+  }
+
   const handleStatusChange = (newStatus) => {
     if (isFinal) return;
 
@@ -209,7 +242,7 @@ function OrderRow({ order, onUpdated }){
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+    <div className={`bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-200 border-l-8 ${getStatusBorderClass(order.status)}`}>
       <div className="p-6">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column: Order Details */}

@@ -5,6 +5,8 @@ const ProductSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   price: { type: Number, default: 0 },
   stock: { type: Number, default: 0 },
+  unit: { type: String, default: 'gm' }, // gm, kg, ml, l, pack, pc
+  quantityValue: { type: Number, default: 0 },
   imageUrl: { type: String, default: '' }, // Now stores base64 data URI (e.g., data:image/png;base64,...)
   category: { type: String, default: 'General' },
   keywords: { type: [String], default: [] }

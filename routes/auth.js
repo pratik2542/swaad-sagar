@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const sendEmail = require('../utils/email');
 const User = require('../models/User');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
@@ -85,18 +85,9 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     // Send email
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
+    await sendEmail({
       to: email,
       subject: 'Password Reset - Swaad Sagar',
       html: `
@@ -111,9 +102,7 @@ router.post('/forgot-password', async (req, res) => {
           <p style="color: #666; font-size: 12px;">Swaad Sagar - Delicious Indian Snacks</p>
         </div>
       `
-    };
-
-    await transporter.sendMail(mailOptions);
+    });
 
     res.json({ message: 'If an account with that email exists, we have sent you a password reset link.' });
   } catch (err) {

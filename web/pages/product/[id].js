@@ -53,6 +53,18 @@ export default function ProductDetails() {
 
   const updateQuantity = async (newQty) => {
     if (!product) return
+    
+    // Check stock limit
+    if (newQty > (product.stock || 0)) {
+      const stock = product.stock || 0;
+      if (stock === 0) {
+        toast('Item is out of stock', 'error');
+        return;
+      }
+      toast(`Only ${stock} items available. Quantity adjusted.`, 'error');
+      newQty = stock;
+    }
+
     try {
       if (isGuest) {
         const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]')
@@ -116,6 +128,9 @@ export default function ProductDetails() {
     </div>
   )
 
+  const isOutOfStock = (product.stock || 0) <= 0;
+  const isLowStock = (product.stock || 0) > 0 && (product.stock || 0) <= 5;
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -133,10 +148,26 @@ export default function ProductDetails() {
               <img
                 src={product.imageUrl || '/placeholder.png'}
                 alt={product.name}
-                className="absolute inset-0 w-full h-full object-cover"
+                className={`absolute inset-0 w-full h-full object-cover ${isOutOfStock ? 'opacity-50 grayscale' : ''}`}
                 onError={(e) => e.target.src = 'https://via.placeholder.com/800x600/f3f4f6/9ca3af?text=Snack'}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+              
+              {/* Stock Badges */}
+              {isOutOfStock && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                  <span className="bg-red-600 text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg transform -rotate-12">
+                    Out of Stock
+                  </span>
+                </div>
+              )}
+              {isLowStock && !isOutOfStock && (
+                <div className="absolute top-4 right-4">
+                  <span className="bg-orange-500 text-white px-3 py-1.5 rounded-xl text-sm font-bold shadow-md animate-pulse">
+                    Hurry! Only {product.stock} left
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Details Section */}
@@ -148,9 +179,16 @@ export default function ProductDetails() {
                 <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
                   {product.name}
                 </h1>
-                <p className="text-3xl font-bold text-purple-600 mb-6">
-                  ₹{(product.price || 0).toFixed(2)}
-                </p>
+                <div className="flex items-baseline gap-2 mb-6">
+                  <p className="text-3xl font-bold text-purple-600">
+                    ₹{(product.price || 0).toFixed(2)}
+                  </p>
+                  {product.quantityValue && (
+                    <span className="text-lg text-gray-500 font-medium">
+                      / {product.quantityValue} {product.unit}
+                    </span>
+                  )}
+                </div>
                 <div className="prose prose-purple text-gray-500 mb-8">
                   {product.description ? product.description.split('\n').map((line, i) => (
                     <p key={i} className={`mb-2 ${line.trim().startsWith('•') ? 'pl-4' : ''}`}>
@@ -177,7 +215,12 @@ export default function ProductDetails() {
                       <span className="font-bold text-gray-900 text-xl w-12 text-center">{qty}</span>
                       <button
                         onClick={() => updateQuantity(qty + 1)}
-                        className="w-12 h-12 flex items-center justify-center bg-white hover:bg-green-50 text-gray-700 hover:text-green-600 rounded-lg transition-all duration-200 shadow-sm font-bold text-xl"
+                        className={`w-12 h-12 flex items-center justify-center bg-white rounded-lg transition-all duration-200 shadow-sm font-bold text-xl ${
+                          qty >= (product.stock || 0) 
+                            ? 'opacity-50 cursor-not-allowed text-gray-400' 
+                            : 'hover:bg-green-50 text-gray-700 hover:text-green-600'
+                        }`}
+                        disabled={qty >= (product.stock || 0)}
                       >
                         +
                       </button>
@@ -192,12 +235,23 @@ export default function ProductDetails() {
                 ) : (
                   <button
                     onClick={() => updateQuantity(1)}
-                    className="w-full md:w-auto px-8 py-4 bg-gray-900 hover:bg-purple-600 text-white text-lg font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-purple-500/30 flex items-center justify-center gap-3"
+                    disabled={isOutOfStock}
+                    className={`w-full md:w-auto px-8 py-4 text-lg font-bold rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-3 ${
+                      isOutOfStock
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-900 hover:bg-purple-600 text-white hover:shadow-purple-500/30'
+                    }`}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Add to Cart
+                    {isOutOfStock ? (
+                      'Out of Stock'
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Add to Cart
+                      </>
+                    )}
                   </button>
                 )}
               </div>

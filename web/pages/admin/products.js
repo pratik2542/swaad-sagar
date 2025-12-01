@@ -4,7 +4,7 @@ import { apiFetch } from '../../lib/api'
 export default function AdminProducts(){
   const [products, setProducts] = useState(null)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ name:'', description:'', price:'', stock:'', imageUrl:'', category:'', keywords:'' })
+  const [form, setForm] = useState({ name:'', description:'', price:'', stock:'', unit:'gm', quantityValue:'', imageUrl:'', category:'', keywords:'' })
   const [imagePreview, setImagePreview] = useState('')
   const [generatingDesc, setGeneratingDesc] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,11 +43,12 @@ export default function AdminProducts(){
         ...form, 
         price: parseFloat(form.price), 
         stock: parseInt(form.stock,10),
+        quantityValue: parseFloat(form.quantityValue) || 0,
         keywords: form.keywords ? form.keywords.split(',').map(k => k.trim()).filter(Boolean) : []
       };
       if (editing) await apiFetch(`/products/${editing}`, { method: 'PUT', body: JSON.stringify(payload) });
       else await apiFetch('/products', { method: 'POST', body: JSON.stringify(payload) });
-      setForm({ name:'', description:'', price:'', stock:'', imageUrl:'', category:'', keywords:'' }); setEditing(null); setImagePreview(''); load();
+      setForm({ name:'', description:'', price:'', stock:'', unit:'gm', quantityValue:'', imageUrl:'', category:'', keywords:'' }); setEditing(null); setImagePreview(''); load();
     } catch (e) { alert('Save failed: ' + (e.message || '')); }
   }
 
@@ -85,6 +86,8 @@ Keep it concise and appetizing. Use bullet points with • symbol.`;
       description: p.description, 
       price: p.price, 
       stock: p.stock, 
+      unit: p.unit || 'gm',
+      quantityValue: p.quantityValue || '',
       imageUrl: p.imageUrl,
       category: p.category || '',
       keywords: Array.isArray(p.keywords) ? p.keywords.join(', ') : ''
@@ -160,6 +163,34 @@ Keep it concise and appetizing. Use bullet points with • symbol.`;
                     onChange={e=>setForm(f=>({...f,stock:e.target.value}))} 
                     className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Quantity Value</label>
+                  <input 
+                    type="number"
+                    placeholder="e.g. 250" 
+                    value={form.quantityValue} 
+                    onChange={e=>setForm(f=>({...f,quantityValue:e.target.value}))} 
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                  <select 
+                    value={form.unit} 
+                    onChange={e=>setForm(f=>({...f,unit:e.target.value}))} 
+                    className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="gm">Grams (gm)</option>
+                    <option value="kg">Kilograms (kg)</option>
+                    <option value="ml">Milliliters (ml)</option>
+                    <option value="l">Litres (l)</option>
+                    <option value="pack">Pack</option>
+                    <option value="pc">Piece (pc)</option>
+                  </select>
                 </div>
               </div>
 

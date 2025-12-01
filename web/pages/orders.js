@@ -83,14 +83,24 @@ export default function Orders(){
     }
   }
 
+  const getStatusBorderClass = (s) => {
+    switch(s) {
+      case 'Delivered': return 'border-l-green-500';
+      case 'Cancelled': return 'border-l-red-500';
+      case 'Shipped': return 'border-l-blue-500';
+      case 'Processing': return 'border-l-yellow-500';
+      default: return 'border-l-purple-600';
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">My Orders</h1>
         
-        <div className="space-y-6">
+        <div className="space-y-8">
           {orders.map(o => (
-            <div key={o._id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+            <div key={o._id} className={`bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-200 border-l-8 ${getStatusBorderClass(o.status)}`}>
               {/* Order Header */}
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex gap-6 text-sm">
