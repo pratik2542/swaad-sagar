@@ -86,7 +86,7 @@ export default function Home() {
       {/* Sticky Category Nav */}
       <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center space-x-2 overflow-x-auto py-3 scrollbar-hide pl-1">
+          <div className="flex flex-wrap items-center gap-2 py-3 pl-1">
             {categories.map(category => {
               const isActive = selectedCategory === category
               const count = category === 'All' ? activeProducts.length : activeProducts.filter(p => p.category === category).length

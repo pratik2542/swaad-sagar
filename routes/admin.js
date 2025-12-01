@@ -322,6 +322,9 @@ router.get('/analytics', auth, admin, async (req, res) => {
       count
     }));
 
+    // Low stock count
+    const lowStockCount = await Product.countDocuments({ stock: { $lte: 5 } });
+
     res.json({
       totalRevenue,
       totalOrders,
@@ -332,8 +335,10 @@ router.get('/analytics', auth, admin, async (req, res) => {
       topProducts,
       statusDistribution,
       monthlyRevenue: monthlyRevenueData,
-      monthlyOrders: monthlyOrdersData
+      monthlyOrders: monthlyOrdersData,
+      lowStockCount
     });
+
   } catch (err) {
     console.error('Admin analytics failed', err);
     res.status(500).json({ message: 'Server error' });
